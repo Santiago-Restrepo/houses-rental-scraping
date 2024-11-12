@@ -3,24 +3,21 @@ from bs4 import BeautifulSoup
 import re
 from typing import List, Dict
 import logging
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from constants.configuration import MAX_LISTINGS_PER_PAGE, BASE_URL, RENTAL_BASE_URL
-from utils.data_handler import save_data_to_csv
+from constants.configuration import MAX_LISTINGS_PER_PAGE, PAGE_SLEEP_TIME, RENTAL_BASE_URL
+from utils.data_handler import append_data_to_csv, save_data_to_csv
 class AnnouncementsScraper(WebScraper):
     def extract_data(self, cities: List[Dict]) -> List[Dict]:
         """Scrapes listings from all cities concurrently."""
-        all_announcements = []
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             futures = [executor.submit(self.scrape_city, city) for city in cities]
             for future in as_completed(futures):
                 try:
                     announcements = future.result()
-                    all_announcements.extend(announcements)
+                    append_data_to_csv(announcements, filename=f'{self.save_data_path}/{self.save_data_file_name}')
                 except Exception as e:
                     logging.error(f"Error scraping city: {e}")
-        save_data_to_csv(all_announcements, filename=f'{self.save_data_path}/{self.save_data_file_name}')
-        return all_announcements
-
     def scrape_city(self, city: Dict, start_offset: int = 0) -> List[Dict]:
         """Scrapes all listings for a given city."""
         all_listings = []
@@ -38,6 +35,7 @@ class AnnouncementsScraper(WebScraper):
                 break
 
             offset += MAX_LISTINGS_PER_PAGE
+            time.sleep(PAGE_SLEEP_TIME)
         save_data_to_csv(all_listings, filename=f'{self.save_data_path}/cities/{city["name"]}.csv')
         return all_listings
 
