@@ -48,28 +48,14 @@ class ETLOrchestrator:
         
         try:
             # Extract cities data
-            self.logger.info("Step 1: Extracting cities data...")
-            raw_cities = self.cities_extractor.extract()
-            if not raw_cities:
-                self.logger.error("Failed to extract cities data")
-                return False
-            
-            # Transform cities data
-            self.logger.info("Step 2: Transforming cities data...")
-            transformed_cities = self.cities_transformer.transform(raw_cities)
-            if not transformed_cities:
-                self.logger.error("Failed to transform cities data")
-                return False
-            
-            # Load cities data
-            self.logger.info("Step 3: Loading cities data...")
-            if not self.csv_loader.load_cities(transformed_cities, self.cities_filepath):
-                self.logger.error("Failed to load cities data")
+            cities = self._get_or_extract_cities()
+            if not cities:
+                self.logger.error("Failed to get cities data")
                 return False
             
             # Extract announcements data
             self.logger.info("Step 4: Extracting announcements data...")
-            raw_announcements = self.announcements_extractor.extract(transformed_cities)
+            raw_announcements = self.announcements_extractor.extract(cities)
             if not raw_announcements:
                 self.logger.error("Failed to extract announcements data")
                 return False

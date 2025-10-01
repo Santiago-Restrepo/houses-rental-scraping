@@ -16,10 +16,7 @@ class CSVLoader(BaseLoader):
         """Load data to CSV file."""
         if not self._validate_data(data):
             return False
-        
         try:
-            self._ensure_data_directory(filepath)
-
             # Create DataFrame from data
             df = pd.DataFrame(data)
             
@@ -65,9 +62,7 @@ class CSVLoader(BaseLoader):
         if not announcements_data:
             return True  # Empty batch is not an error
         
-        try:
-            self._ensure_data_directory(filepath)
-            
+        try:            
             # Add extraction timestamp to each announcement
             extraction_time = datetime.now().isoformat()
             for announcement in announcements_data:

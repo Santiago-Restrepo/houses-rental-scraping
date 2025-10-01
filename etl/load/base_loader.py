@@ -21,12 +21,6 @@ class BaseLoader(ABC):
         """Load data to the destination."""
         pass
 
-    def _ensure_data_directory(self, data_dir: str):
-        """Ensure the data directory exists."""
-        if not os.path.exists(data_dir):
-            os.makedirs(data_dir)
-            self.logger.info(f"Created data directory: {data_dir}")
-
     def _validate_data(self, data: List[Dict]) -> bool:
         """Validate that data is in the expected format."""
         if not isinstance(data, list):

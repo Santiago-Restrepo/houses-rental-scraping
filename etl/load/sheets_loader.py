@@ -37,7 +37,7 @@ class SheetsLoader(BaseLoader):
             # Write headers + rows
             sheet.update([df.columns.values.tolist()] + df.values.tolist())
 
-            self.logger.info(f"Loaded {len(data)} records into Google Sheet: {sheet_name}")
+            self.logger.info(f"Loaded {len(data)} records into Google Sheet: {sheet_key}")
             return True
 
         except Exception as e:
