@@ -62,6 +62,10 @@ PROPERTY_TYPES = {
     'lots_and_parcels': 10,
 }
 
+# Google Sheets Configuration
+CREDS_PATH = "secrets/creds.json"
+SHEETS_KEY = "1ellhzjwpDXoEnpAz6qoingcXXRkS3pSrwmWnoAhXq40"
+
 # Logging Configuration
 LOG_LEVEL = "INFO"
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

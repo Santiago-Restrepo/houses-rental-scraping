@@ -8,10 +8,13 @@ import os
 from typing import List, Dict, Optional
 from etl.extract import CitiesExtractor, AnnouncementsExtractor
 from etl.transform import CitiesTransformer, AnnouncementsTransformer
-from etl.load import CSVLoader
+from etl.load import CSVLoader, SheetsLoader
+
 from config.settings import (
     CITIES_FILENAME, ANNOUNCEMENTS_FILENAME, DATA_DIR, 
-    STREAMING_CONFIG
+    STREAMING_CONFIG,
+    CREDS_PATH,
+    SHEETS_KEY
 )
 
 
@@ -27,9 +30,14 @@ class ETLOrchestrator:
         self.cities_transformer = CitiesTransformer()
         self.announcements_transformer = AnnouncementsTransformer()
         self.csv_loader = CSVLoader()
+        self.sheets_loader = SheetsLoader(CREDS_PATH)
+
+        # Files paths
+        self.cities_filepath = os.path.join(DATA_DIR, CITIES_FILENAME)
+        self.announcements_filepath = os.path.join(DATA_DIR, ANNOUNCEMENTS_FILENAME)
+        self.checkpoint_file = os.path.join(DATA_DIR, STREAMING_CONFIG['checkpoint_file'])
         
         # Streaming state
-        self.checkpoint_file = os.path.join(DATA_DIR, STREAMING_CONFIG['checkpoint_file'])
         self.processed_cities = set()
         self.total_announcements = 0
         self.is_first_batch = True
@@ -55,7 +63,7 @@ class ETLOrchestrator:
             
             # Load cities data
             self.logger.info("Step 3: Loading cities data...")
-            if not self.csv_loader.load_cities(transformed_cities, CITIES_FILENAME):
+            if not self.csv_loader.load_cities(transformed_cities, self.cities_filepath):
                 self.logger.error("Failed to load cities data")
                 return False
             
@@ -75,12 +83,15 @@ class ETLOrchestrator:
             
             # Load announcements data
             self.logger.info("Step 6: Loading announcements data...")
-            if not self.csv_loader.load_announcements(transformed_announcements, ANNOUNCEMENTS_FILENAME):
+            if not self.csv_loader.load_announcements(transformed_announcements, self.announcements_filepath):
                 self.logger.error("Failed to load announcements data")
                 return False
             
-            # Note: Per-city files are no longer created to simplify data structure
-            # Use the consolidated announcements.csv file for analysis
+            # Load announcements data to Google Sheets
+            self.logger.info("Step 7: Loading announcements data to Google Sheets...")
+            if not self.sheets_loader.load(transformed_announcements, SHEETS_KEY):
+                self.logger.error("Failed to load announcements data to Google Sheets")
+                return False
             
             self.logger.info("ETL pipeline completed successfully!")
             return True
@@ -105,7 +116,7 @@ class ETLOrchestrator:
                 return False
             
             # Load cities data
-            if not self.csv_loader.load_cities(transformed_cities, CITIES_FILENAME):
+            if not self.csv_loader.load_cities(transformed_cities, self.cities_filepath):
                 return False
             
             self.logger.info("Cities ETL pipeline completed successfully!")
@@ -156,7 +167,7 @@ class ETLOrchestrator:
     
     def _get_or_extract_cities(self) -> Optional[List[Dict]]:
         """Get cities data, extracting if necessary."""
-        cities_file = os.path.join(DATA_DIR, CITIES_FILENAME)
+        cities_file = self.cities_filepath
         
         if os.path.exists(cities_file):
             self.logger.info("Cities file exists, loading from file...")
@@ -178,7 +189,7 @@ class ETLOrchestrator:
             return None
         
         # Save cities data
-        if not self.csv_loader.load_cities(transformed_cities, CITIES_FILENAME):
+        if not self.csv_loader.load_cities(transformed_cities, self.cities_filepath):
             self.logger.error("Failed to save cities data")
             return None
         
@@ -200,7 +211,7 @@ class ETLOrchestrator:
                 # Save in streaming fashion
                 success = self.csv_loader.load_announcements_streaming(
                     transformed_announcements, 
-                    ANNOUNCEMENTS_FILENAME,
+                    self.announcements_filepath,
                     is_first_batch=self.is_first_batch
                 )
                 
