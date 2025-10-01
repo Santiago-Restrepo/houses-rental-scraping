@@ -42,6 +42,7 @@ class CitiesExtractor(BaseExtractor):
         cities_data = []
         for url, city_name in city_links:
             city_info = self._extract_city_info(url, city_name)
+            print(city_info)
             if city_info:
                 cities_data.append(city_info)
         
@@ -56,8 +57,7 @@ class CitiesExtractor(BaseExtractor):
             return {
                 'name': query_params.get('nCiudad', [''])[0] or city_name,
                 'code': query_params.get('pCiudad', [''])[0],
-                'url': url,
-                'extracted_name': city_name
+                'url': url
             }
         except Exception as e:
             self.logger.error(f"Error extracting city info from URL {url}: {e}")

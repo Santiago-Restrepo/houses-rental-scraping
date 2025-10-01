@@ -38,10 +38,10 @@ class AnnouncementsExtractor(BaseExtractor):
         city_announcements = []
         offset = 0
         
-        self.logger.info(f"Extracting announcements for city: {city['name']} (code: {city['code']})")
+        self.logger.info(f"Extracting announcements for city: {city['name']} (id: {city['id']})")
         
         while True:
-            url = self._build_city_url(city['code'], offset)
+            url = self._build_city_url(city['id'], offset)
             self.logger.debug(f"Fetching page: {url}")
             
             html_content = self.fetch_page(url)
@@ -62,9 +62,9 @@ class AnnouncementsExtractor(BaseExtractor):
         self.logger.info(f"Extracted {len(city_announcements)} announcements for {city['name']}")
         return city_announcements
     
-    def _build_city_url(self, city_code: str, offset: int) -> str:
+    def _build_city_url(self, city_id: str, offset: int) -> str:
         """Build URL for city listings with pagination."""
-        return f"{BASE_URL}{RENTAL_BASE_URL}?pCiudad={city_code}&pTipoInmueble=&nCiudad=&offset={offset}"
+        return f"{BASE_URL}{RENTAL_BASE_URL}?pCiudad={city_id}&pTipoInmueble=&nCiudad=&offset={offset}"
     
     def _is_last_page(self, html_content: str) -> bool:
         """Check if the current page is the last page."""
@@ -117,7 +117,7 @@ class AnnouncementsExtractor(BaseExtractor):
                 'area': area,
                 'description': description,
                 'city': city['name'],
-                'city_code': city['code']
+                'city_id': city['id']
             }
         except Exception as e:
             self.logger.error(f"Error parsing announcement: {e}")

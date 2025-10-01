@@ -27,10 +27,10 @@ class AnnouncementsTransformer(BaseTransformer):
         """Transform a single announcement record."""
         try:
             return {
-                'announcement_id': self.clean_string(announcement.get('id', '')),
+                'id': self.clean_string(announcement.get('id', '')),
                 'url': self.clean_string(announcement.get('url', '')),
                 'city_name': self._clean_city_name(announcement.get('city', '')),
-                'city_code': self.clean_string(announcement.get('city_code', '')),
+                'city_id': self.clean_string(announcement.get('city_id', '')),
                 'neighborhood': self._clean_neighborhood(announcement.get('neighborhood', '')),
                 'price': self._clean_price(announcement.get('price', 0)),
                 'rooms': self._clean_rooms(announcement.get('rooms', '')),

@@ -103,9 +103,8 @@ The pipeline generates the following CSV files:
 
 ### `data/cities.csv`
 Contains city information:
-- `city_id`: Unique city identifier
+- `id`: Unique city identifier
 - `city_name`: Cleaned city name
-- `extracted_name`: Original extracted name
 - `url`: Source URL
 - `is_active`: Whether the city is active
 - `created_at`: Timestamp

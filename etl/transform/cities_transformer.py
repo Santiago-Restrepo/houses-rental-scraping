@@ -27,9 +27,8 @@ class CitiesTransformer(BaseTransformer):
         """Transform a single city record."""
         try:
             return {
-                'city_id': self.clean_string(city.get('code', '')),
-                'city_name': self._clean_city_name(city.get('name', '')),
-                'extracted_name': self.clean_string(city.get('extracted_name', '')),
+                'id': self.clean_string(city.get('code', '')),
+                'name': self._clean_city_name(city.get('name', '')),
                 'url': self.clean_string(city.get('url', '')),
                 'is_active': True,
                 'created_at': self._get_current_timestamp()
