@@ -10,16 +10,30 @@ from utils.logger import setup_logging
 
 def main():
     """Main function to run the ETL pipeline."""
+    import sys
+    import argparse
+    
+    # Setup argument parser
+    parser = argparse.ArgumentParser(description='Houses rental scraping ETL pipeline')
+    parser.add_argument('--mode', choices=['full', 'streaming', 'cities-only'], 
+                       default='streaming', help='ETL pipeline mode')
+    args = parser.parse_args()
+    
     # Setup logging
     logger = setup_logging()
-    logger.info("Starting houses rental scraping ETL pipeline...")
+    logger.info(f"Starting houses rental scraping ETL pipeline in {args.mode} mode...")
     
     try:
         # Initialize ETL orchestrator
         orchestrator = ETLOrchestrator()
         
-        # Run the full ETL pipeline
-        success = orchestrator.run_full_pipeline()
+        # Run the appropriate pipeline
+        if args.mode == 'streaming':
+            success = orchestrator.run_streaming_pipeline()
+        elif args.mode == 'cities-only':
+            success = orchestrator.run_cities_only()
+        else:  # full
+            success = orchestrator.run_full_pipeline()
         
         if success:
             logger.info("ETL pipeline completed successfully!")

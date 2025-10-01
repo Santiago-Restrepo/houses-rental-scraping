@@ -5,17 +5,20 @@ Announcements data extractor for scraping rental property listings.
 import re
 import time
 from bs4 import BeautifulSoup
-from typing import List, Dict
+from typing import List, Dict, Optional, Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from .base_extractor import BaseExtractor
-from config.settings import BASE_URL, RENTAL_BASE_URL, MAX_LISTINGS_PER_PAGE, PAGE_SLEEP_TIME
+from config.settings import (
+    BASE_URL, RENTAL_BASE_URL, MAX_LISTINGS_PER_PAGE, 
+    PAGE_SLEEP_TIME, CITY_SLEEP_TIME, STREAMING_CONFIG
+)
 
 
 class AnnouncementsExtractor(BaseExtractor):
     """Extractor for rental property announcements."""
     
     def extract(self, cities: List[Dict]) -> List[Dict]:
-        """Extract announcements from all cities concurrently."""
+        """Extract announcements from all cities concurrently (legacy method)."""
         self.logger.info(f"Extracting announcements from {len(cities)} cities...")
         
         all_announcements = []
@@ -32,6 +35,50 @@ class AnnouncementsExtractor(BaseExtractor):
         
         self.logger.info(f"Extracted {len(all_announcements)} total announcements")
         return all_announcements
+
+    def extract_streaming(self, cities: List[Dict], callback: Optional[Callable] = None) -> int:
+        """
+        Extract announcements from cities in streaming fashion with callback.
+        
+        Args:
+            cities: List of city dictionaries
+            callback: Optional callback function to process each city's announcements
+            
+        Returns:
+            Total number of announcements extracted
+        """
+        self.logger.info(f"Starting streaming extraction from {len(cities)} cities...")
+        
+        total_announcements = 0
+        batch_size = STREAMING_CONFIG['batch_size']
+        
+        # Process cities in batches
+        for i in range(0, len(cities), batch_size):
+            batch = cities[i:i + batch_size]
+            self.logger.info(f"Processing batch {i//batch_size + 1}: cities {i+1}-{min(i+batch_size, len(cities))}")
+            
+            # Process batch with limited concurrency
+            with ThreadPoolExecutor(max_workers=min(self.max_workers, len(batch))) as executor:
+                futures = [executor.submit(self._extract_city_announcements, city) for city in batch]
+                
+                for future in as_completed(futures):
+                    try:
+                        announcements = future.result()
+                        total_announcements += len(announcements)
+                        
+                        # Call callback if provided
+                        if callback and announcements:
+                            callback(announcements)
+                            
+                    except Exception as e:
+                        self.logger.error(f"Error extracting announcements from batch: {e}")
+            
+            # Add delay between batches to be respectful
+            if i + batch_size < len(cities):
+                time.sleep(CITY_SLEEP_TIME)
+        
+        self.logger.info(f"Streaming extraction completed. Total announcements: {total_announcements}")
+        return total_announcements
     
     def _extract_city_announcements(self, city: Dict) -> List[Dict]:
         """Extract all announcements for a specific city."""

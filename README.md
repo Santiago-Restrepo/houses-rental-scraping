@@ -40,13 +40,23 @@ pip install -r requirements.txt
 
 ### Running the Pipeline
 
-#### Option 1: Run the complete pipeline
+#### Option 1: Run with different modes (Recommended)
 ```bash
-python main.py
+# Streaming mode (default) - processes data incrementally with checkpointing
+python main.py --mode streaming
+
+# Full mode - traditional batch processing
+python main.py --mode full
+
+# Cities only - extract and save cities data only
+python main.py --mode cities-only
 ```
 
 #### Option 2: Use the CLI interface
 ```bash
+# Run streaming pipeline (recommended)
+python cli.py streaming
+
 # Run complete pipeline
 python cli.py full
 
@@ -104,28 +114,45 @@ The pipeline generates the following CSV files:
 ### `data/cities.csv`
 Contains city information:
 - `id`: Unique city identifier
-- `city_name`: Cleaned city name
+- `name`: Cleaned city name
 - `url`: Source URL
 - `is_active`: Whether the city is active
 - `created_at`: Timestamp
 
 ### `data/announcements.csv`
 Contains rental property announcements:
-- `announcement_id`: Unique announcement identifier
+- `id`: Unique announcement identifier
 - `url`: Link to full announcement
-- `city_name`: Associated city
+- `city`: Associated city name
+- `city_id`: Associated city ID
 - `neighborhood`: Property neighborhood
 - `price`: Monthly rent price
 - `rooms`: Number of rooms
 - `bathrooms`: Number of bathrooms
 - `parkings`: Number of parking spaces
-- `area`: Property area in square meters
+- `area`: Property area
 - `description`: Property description
-- `property_type`: Inferred property type
-- `created_at`: Timestamp
+- `img_url`: Property image URL
+- `extraction_timestamp`: When the data was extracted
 
-### `data/announcements_{city_name}.csv`
-Individual files for each city's announcements.
+## 🆕 New Features (v2.0)
+
+### Streaming ETL Pipeline
+- **Incremental Processing**: Data is saved as it's extracted, not at the end
+- **Checkpointing**: Resume processing from where it left off if interrupted
+- **Progress Visibility**: See results in real-time as cities are processed
+- **Memory Efficient**: Process data in batches instead of loading everything into memory
+
+### Advanced Rate Limiting
+- **Exponential Backoff**: Automatically handles rate limiting with intelligent delays
+- **User Agent Rotation**: Rotates between different user agents to avoid detection
+- **Request Throttling**: Respects server limits with configurable request rates
+- **Jitter**: Adds randomness to avoid pattern detection
+
+### Improved Data Structure
+- **Consolidated Storage**: Single `announcements.csv` file instead of multiple per-city files
+- **Metadata Tracking**: Includes extraction timestamps for data lineage
+- **Simplified Analysis**: Easier to work with single consolidated dataset
 
 ## 🔍 Data Sources
 
