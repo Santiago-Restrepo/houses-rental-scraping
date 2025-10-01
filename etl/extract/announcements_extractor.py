@@ -151,6 +151,7 @@ class AnnouncementsExtractor(BaseExtractor):
             price = self._extract_price(announcement_div)
             rooms, bathrooms, parkings, area = self._extract_property_details(announcement_div)
             description = self._extract_description(announcement_div)
+            is_featured, is_recently_updated = self._extract_tags(announcement_div)
             
             return {
                 'id': listing_id,
@@ -164,7 +165,9 @@ class AnnouncementsExtractor(BaseExtractor):
                 'area': area,
                 'description': description,
                 'city': city['name'],
-                'city_id': city['id']
+                'city_id': city['id'],
+                'is_featured': is_featured,
+                'is_recently_updated': is_recently_updated
             }
         except Exception as e:
             self.logger.error(f"Error parsing announcement: {e}")
@@ -210,4 +213,12 @@ class AnnouncementsExtractor(BaseExtractor):
         """Extract the description from the announcement."""
         p_tags = announcement_div.find_all('p')
         return max((p.text.strip() for p in p_tags if p.text.strip()), key=len, default='N/A')
+
+    def _extract_tags(self, announcement_div) -> tuple:
+        """Extract the tags from the announcement."""
+        tags = announcement_div.find_all('span', class_='badge')
+        text_tags = [tag.text.strip() for tag in tags]
+        is_featured = 'Destacado' in text_tags
+        is_recently_updated = 'Recien actualizado' in text_tags
+        return is_featured, is_recently_updated
 

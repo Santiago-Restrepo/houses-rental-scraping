@@ -40,7 +40,8 @@ class AnnouncementsTransformer(BaseTransformer):
                 'description': self._clean_description(announcement.get('description', '')),
                 'image_url': self.clean_string(announcement.get('img_url', '')),
                 'property_type': self._infer_property_type(announcement),
-                'is_active': True,
+                'is_featured': announcement.get('is_featured', ''),
+                'is_recently_updated': announcement.get('is_recently_updated', ''),
                 'created_at': self._get_current_timestamp()
             }
         except Exception as e:

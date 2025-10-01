@@ -27,7 +27,7 @@ class BaseTransformer(ABC):
         if isinstance(value, str):
             return value.strip()
         
-        return str(value).strip()
+        return str(value).strip().lower()
 
     def clean_numeric(self, value: Any) -> int:
         """Clean and convert values to integers."""
