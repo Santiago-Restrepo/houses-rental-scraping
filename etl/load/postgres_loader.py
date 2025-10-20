@@ -164,8 +164,24 @@ class PostgresLoader(BaseLoader):
                         snapshot = self._transform_announcement_to_snapshot(announcement, listing['provider_listing_id'])
                         snapshots_data.append(snapshot)
 
-                    # Load listings and snapshots
+                    # Load listings first
                     success_listings = self._load_listings(cursor, listings_data)
+                    if not success_listings:
+                        return False
+
+                    # Retrieve listing_ids for the inserted listings
+                    provider_ids = [listing['provider_listing_id'] for listing in listings_data]
+                    cursor.execute(
+                        "SELECT id, provider_listing_id FROM listings WHERE provider_listing_id = ANY(%s)",
+                        (provider_ids,)
+                    )
+                    listing_id_map = {row[1]: row[0] for row in cursor.fetchall()}
+
+                    # Update snapshots with correct listing_id
+                    for snapshot in snapshots_data:
+                        snapshot['listing_id'] = listing_id_map.get(snapshot['provider_listing_id'])
+
+                    # Load snapshots
                     success_snapshots = self._load_snapshots(cursor, snapshots_data)
 
                     return success_listings and success_snapshots

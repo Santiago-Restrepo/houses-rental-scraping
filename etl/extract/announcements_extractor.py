@@ -137,7 +137,7 @@ class AnnouncementsExtractor(BaseExtractor):
         announcements = []
         for div in announcement_divs:
             announcement = self._parse_single_announcement(div, city)
-            if announcement:
+            if announcement and announcement['id'] != 'N/A':
                 announcements.append(announcement)
         
         return announcements
