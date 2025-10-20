@@ -20,11 +20,11 @@ CREATE TABLE "listings" (
   "property_type" varchar(50),
   "city" varchar(100),
   "neighborhood" varchar(200),
-  "location" text,
   "price" numeric,
   "currency" varchar(10) DEFAULT 'COP',
   "rooms" int,
   "bathrooms" int,
+  "parkings" int,
   "area_m2" numeric,
   "link" text,
   "image_url" text,
@@ -65,8 +65,6 @@ COMMENT ON COLUMN "listings"."provider_listing_id" IS 'Espacio Urbano listing ID
 COMMENT ON COLUMN "listings"."title" IS 'Property title or headline';
 
 COMMENT ON COLUMN "listings"."property_type" IS 'Apartment, house, studio, etc.';
-
-COMMENT ON COLUMN "listings"."location" IS 'Human-readable location string';
 
 COMMENT ON COLUMN "listings"."price" IS 'Last observed price (COP)';
 
