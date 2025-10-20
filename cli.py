@@ -10,12 +10,12 @@ from etl import ETLOrchestrator
 from utils.logger import setup_logging
 
 
-def run_full_pipeline():
+def run_full_pipeline(loader_type=None):
     """Run the complete ETL pipeline."""
     logger = setup_logging()
-    logger.info("Running full ETL pipeline...")
-    
-    orchestrator = ETLOrchestrator()
+    logger.info(f"Running full ETL pipeline with {loader_type or 'default'} loader...")
+
+    orchestrator = ETLOrchestrator(loader_type=loader_type)
     success = orchestrator.run_full_pipeline()
     
     if not success:
@@ -25,12 +25,12 @@ def run_full_pipeline():
     logger.info("Full pipeline completed successfully!")
 
 
-def run_cities_only():
+def run_cities_only(loader_type=None):
     """Run only the cities extraction pipeline."""
     logger = setup_logging()
-    logger.info("Running cities-only pipeline...")
-    
-    orchestrator = ETLOrchestrator()
+    logger.info(f"Running cities-only pipeline with {loader_type or 'default'} loader...")
+
+    orchestrator = ETLOrchestrator(loader_type=loader_type)
     success = orchestrator.run_cities_only()
     
     if not success:
@@ -40,12 +40,12 @@ def run_cities_only():
     logger.info("Cities pipeline completed successfully!")
 
 
-def run_streaming_pipeline():
+def run_streaming_pipeline(loader_type=None):
     """Run the streaming ETL pipeline."""
     logger = setup_logging()
-    logger.info("Running streaming ETL pipeline...")
-    
-    orchestrator = ETLOrchestrator()
+    logger.info(f"Running streaming ETL pipeline with {loader_type or 'default'} loader...")
+
+    orchestrator = ETLOrchestrator(loader_type=loader_type)
     success = orchestrator.run_streaming_pipeline()
     
     if not success:
@@ -55,11 +55,11 @@ def run_streaming_pipeline():
     logger.info("Streaming pipeline completed successfully!")
 
 
-def show_error_summary():
+def show_error_summary(loader_type=None):
     """Show error summary from the last run."""
     logger = setup_logging()
-    
-    orchestrator = ETLOrchestrator()
+
+    orchestrator = ETLOrchestrator(loader_type=loader_type)
     error_summary = orchestrator.get_error_summary()
     
     print("Error Summary:")
@@ -80,20 +80,23 @@ def show_error_summary():
 def main():
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(description='Houses Rental Scraping ETL Pipeline')
-    parser.add_argument('command', choices=['full', 'streaming', 'cities', 'errors'], 
+    parser.add_argument('command', choices=['full', 'streaming', 'cities', 'errors'],
                        help='Command to run: full (complete pipeline), streaming (streaming pipeline), cities (cities only), errors (show error summary)')
-    
+    parser.add_argument('--loader', choices=['csv', 'postgres', 'sheets'],
+                       default=None, help='Loader type to use (overrides DEFAULT_LOADER setting)')
+
     args = parser.parse_args()
     
     try:
+        loader_type = args.loader
         if args.command == 'full':
-            run_full_pipeline()
+            run_full_pipeline(loader_type)
         elif args.command == 'streaming':
-            run_streaming_pipeline()
+            run_streaming_pipeline(loader_type)
         elif args.command == 'cities':
-            run_cities_only()
+            run_cities_only(loader_type)
         elif args.command == 'errors':
-            show_error_summary()
+            show_error_summary(loader_type)
     except KeyboardInterrupt:
         print("\nOperation interrupted by user")
         sys.exit(0)

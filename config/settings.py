@@ -66,6 +66,12 @@ PROPERTY_TYPES = {
 CREDS_PATH = "secrets/creds.json"
 SHEETS_KEY = "1ellhzjwpDXoEnpAz6qoingcXXRkS3pSrwmWnoAhXq40"
 
+# PostgreSQL Configuration
+DATABASE_URL = "postgresql://houses_rental_user:password@localhost:5432/houses_rental"
+
+# Loader Configuration
+DEFAULT_LOADER = "csv"  # Options: "csv", "postgres", "sheets"
+
 # Logging Configuration
 LOG_LEVEL = "INFO"
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

@@ -1,3 +1,12 @@
+CREATE DATABASE houses_rental
+    WITH ENCODING 'UTF8'
+    LC_COLLATE='es_CO.UTF-8'
+    LC_CTYPE='es_CO.UTF-8'
+    TEMPLATE=template0
+    OWNER=postgres;
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TYPE "snapshot_status" AS ENUM (
   'active',
   'inactive',

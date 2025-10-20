@@ -15,8 +15,10 @@ def main():
     
     # Setup argument parser
     parser = argparse.ArgumentParser(description='Houses rental scraping ETL pipeline')
-    parser.add_argument('--mode', choices=['full', 'streaming', 'cities-only'], 
+    parser.add_argument('--mode', choices=['full', 'streaming', 'cities-only'],
                        default='streaming', help='ETL pipeline mode')
+    parser.add_argument('--loader', choices=['csv', 'postgres', 'sheets'],
+                       default=None, help='Loader type to use (overrides DEFAULT_LOADER setting)')
     args = parser.parse_args()
     
     # Setup logging
@@ -24,8 +26,9 @@ def main():
     logger.info(f"Starting houses rental scraping ETL pipeline in {args.mode} mode...")
     
     try:
-        # Initialize ETL orchestrator
-        orchestrator = ETLOrchestrator()
+        # Initialize ETL orchestrator with specified loader
+        loader_type = args.loader if args.loader else None
+        orchestrator = ETLOrchestrator(loader_type=loader_type)
         
         # Run the appropriate pipeline
         if args.mode == 'streaming':

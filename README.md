@@ -19,9 +19,11 @@ The project follows a clean ETL architecture with three distinct layers:
 ### 💾 Load Layer (`etl/load/`)
 - **`BaseLoader`**: Abstract base class for all loaders
 - **`CSVLoader`**: Saves data to CSV files with various options
+- **`PostgresLoader`**: Saves data to PostgreSQL database with upsert logic
+- **`SheetsLoader`**: Saves data to Google Sheets
 
 ### 🎯 Orchestration (`etl/etl_orchestrator.py`)
-- **`ETLOrchestrator`**: Coordinates the entire pipeline execution
+- **`ETLOrchestrator`**: Coordinates the entire pipeline execution with strategy pattern for loaders
 
 ## 🚀 Quick Start
 
@@ -50,6 +52,11 @@ python main.py --mode full
 
 # Cities only - extract and save cities data only
 python main.py --mode cities-only
+
+# Specify loader type (overrides DEFAULT_LOADER setting)
+python main.py --mode streaming --loader postgres
+python main.py --mode full --loader csv
+python main.py --mode streaming --loader sheets
 ```
 
 #### Option 2: Use the CLI interface
@@ -65,6 +72,11 @@ python cli.py cities
 
 # Show error summary from last run
 python cli.py errors
+
+# Specify loader type (overrides DEFAULT_LOADER setting)
+python cli.py streaming --loader postgres
+python cli.py full --loader csv
+python cli.py cities --loader sheets
 ```
 
 ## 📁 Project Structure
@@ -106,10 +118,14 @@ All configuration is centralized in `config/settings.py`:
 - **Scraping Parameters**: Page limits, sleep times, timeouts
 - **Data Storage**: Output directories and filenames
 - **Property Types**: Mapping of property type codes
+- **Loader Configuration**: Default loader type (csv/postgres/sheets)
+- **Database Configuration**: PostgreSQL connection string
 
 ## 📊 Output Data
 
-The pipeline generates the following CSV files:
+The pipeline can save data to multiple destinations based on the selected loader:
+
+### CSV Files (when using `csv` loader)
 
 ### `data/cities.csv`
 Contains city information:
@@ -135,7 +151,48 @@ Contains rental property announcements:
 - `img_url`: Property image URL
 - `extraction_timestamp`: When the data was extracted
 
-## 🆕 New Features (v2.0)
+### PostgreSQL Database (when using `postgres` loader)
+The pipeline creates and maintains two tables:
+
+#### `listings` table
+- `id`: UUID primary key
+- `provider_listing_id`: Unique identifier from the source
+- `title`: Property title
+- `property_type`: Apartment, house, etc.
+- `city`: City name
+- `neighborhood`: Neighborhood name
+- `price`: Current price
+- `currency`: Currency code (COP)
+- `rooms`, `bathrooms`, `area_m2`: Property details
+- `features`: JSON object with additional features
+- `metadata`: JSON object with extraction metadata
+- `first_seen`, `last_seen`: Timestamps
+- `active`: Boolean status
+
+#### `listing_snapshots` table
+- `id`: Serial primary key
+- `listing_id`: Foreign key to listings
+- `scraped_at`: Timestamp of scrape
+- `price`: Price at scrape time
+- `status`: Active/inactive status
+- `raw_json`: Complete raw data
+
+### Google Sheets (when using `sheets` loader)
+Data is saved to a Google Sheet specified by `SHEETS_KEY` in configuration.
+
+## 🆕 New Features (v3.0)
+
+### Strategy Pattern for Loaders
+- **Multiple Destinations**: Choose between CSV, PostgreSQL, or Google Sheets
+- **Runtime Configuration**: Switch loaders without code changes
+- **Independent Operation**: Each loader works completely independently
+- **Extensible Design**: Easy to add new loaders by implementing `BaseLoader`
+
+### PostgreSQL Integration
+- **Upsert Logic**: Automatically handles new and existing listings
+- **Data Normalization**: Transforms scraped data to relational format
+- **Snapshot Tracking**: Maintains historical price and status changes
+- **Transactional Safety**: Uses database transactions for data integrity
 
 ### Streaming ETL Pipeline
 - **Incremental Processing**: Data is saved as it's extracted, not at the end
@@ -183,7 +240,8 @@ Logs are automatically saved to `data/logs/` with timestamps. The logging system
 ### Adding New Loaders
 1. Inherit from `BaseLoader`
 2. Implement the `load()` method
-3. Add to the orchestrator
+3. Add loader type to `_create_loader()` factory method in `ETLOrchestrator`
+4. Update configuration settings if needed
 
 ## 🚨 Error Handling
 

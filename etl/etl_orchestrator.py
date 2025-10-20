@@ -8,39 +8,54 @@ import os
 from typing import List, Dict, Optional
 from etl.extract import CitiesExtractor, AnnouncementsExtractor
 from etl.transform import CitiesTransformer, AnnouncementsTransformer
-from etl.load import CSVLoader, SheetsLoader
+from etl.load import CSVLoader, SheetsLoader, PostgresLoader
 
 from config.settings import (
-    CITIES_FILENAME, ANNOUNCEMENTS_FILENAME, DATA_DIR, 
+    CITIES_FILENAME, ANNOUNCEMENTS_FILENAME, DATA_DIR,
     STREAMING_CONFIG,
     CREDS_PATH,
-    SHEETS_KEY
+    SHEETS_KEY,
+    DATABASE_URL,
+    DEFAULT_LOADER
 )
 
 
 class ETLOrchestrator:
     """Main orchestrator for the ETL pipeline."""
-    
-    def __init__(self):
+
+    def __init__(self, loader_type: str = DEFAULT_LOADER):
         self.logger = logging.getLogger(self.__class__.__name__)
-        
+        self.loader_type = loader_type
+
         # Initialize ETL components
         self.cities_extractor = CitiesExtractor()
         self.announcements_extractor = AnnouncementsExtractor()
         self.cities_transformer = CitiesTransformer()
         self.announcements_transformer = AnnouncementsTransformer()
-        self.csv_loader = CSVLoader()
-        self.sheets_loader = SheetsLoader(CREDS_PATH)
 
-        # Files paths
+        # Initialize loader using strategy pattern
+        self.loader = self._create_loader(loader_type)
+
+        # Files paths (only for CSV loader)
         self.cities_filepath = os.path.join(DATA_DIR, CITIES_FILENAME)
         self.announcements_filepath = os.path.join(DATA_DIR, ANNOUNCEMENTS_FILENAME)
         self.checkpoint_file = os.path.join(DATA_DIR, STREAMING_CONFIG['checkpoint_file'])
-        
+
         # Streaming state
         self.processed_cities = set()
         self.total_announcements = 0
         self.is_first_batch = True
+
+    def _create_loader(self, loader_type: str):
+        """Factory method to create the appropriate loader based on type."""
+        if loader_type == "csv":
+            return CSVLoader()
+        elif loader_type == "postgres":
+            return PostgresLoader(DATABASE_URL)
+        elif loader_type == "sheets":
+            return SheetsLoader(CREDS_PATH)
+        else:
+            raise ValueError(f"Unknown loader type: {loader_type}")
     
     def run_full_pipeline(self) -> bool:
         """Run the complete ETL pipeline."""
@@ -67,16 +82,10 @@ class ETLOrchestrator:
                 self.logger.error("Failed to transform announcements data")
                 return False
             
-            # Load announcements data
-            self.logger.info("Step 6: Loading announcements data...")
-            if not self.csv_loader.load_announcements(transformed_announcements, self.announcements_filepath):
+            # Load announcements data using the configured loader
+            self.logger.info(f"Step 6: Loading announcements data to {self.loader_type}...")
+            if not self._load_announcements(transformed_announcements):
                 self.logger.error("Failed to load announcements data")
-                return False
-            
-            # Load announcements data to Google Sheets
-            self.logger.info("Step 7: Loading announcements data to Google Sheets...")
-            if not self.sheets_loader.load(transformed_announcements, SHEETS_KEY):
-                self.logger.error("Failed to load announcements data to Google Sheets")
                 return False
             
             self.logger.info("ETL pipeline completed successfully!")
@@ -192,23 +201,17 @@ class ETLOrchestrator:
             
             # Transform the announcements
             transformed_announcements = self.announcements_transformer.transform(announcements)
-            
+
             if transformed_announcements:
-                # Save in streaming fashion
-                success = self.csv_loader.load_announcements_streaming(
-                    transformed_announcements, 
-                    self.announcements_filepath,
-                    is_first_batch=self.is_first_batch
-                )
-                
-                if success:
+                # Save using the configured loader in streaming fashion
+                if self._load_announcements_streaming(transformed_announcements, self.is_first_batch):
                     self.total_announcements += len(transformed_announcements)
                     self.is_first_batch = False
-                    
+
                     # Update processed cities
                     city_ids = set(ann['city_id'] for ann in transformed_announcements)
                     self.processed_cities.update(city_ids)
-                    
+
                     # Save checkpoint periodically
                     if len(self.processed_cities) % STREAMING_CONFIG['save_frequency'] == 0:
                         self._save_checkpoint()
@@ -275,6 +278,30 @@ class ETLOrchestrator:
         self.processed_cities = set()
         self.total_announcements = 0
         self.is_first_batch = True
+
+    def _load_announcements(self, announcements_data: List[Dict]) -> bool:
+        """Load announcements data using the configured loader."""
+        if self.loader_type == "csv":
+            return self.loader.load_announcements(announcements_data, self.announcements_filepath)
+        elif self.loader_type == "postgres":
+            return self.loader.load_announcements_streaming(announcements_data)
+        elif self.loader_type == "sheets":
+            return self.loader.load(announcements_data, SHEETS_KEY)
+        else:
+            self.logger.error(f"Unsupported loader type for announcements: {self.loader_type}")
+            return False
+
+    def _load_announcements_streaming(self, announcements_data: List[Dict], is_first_batch: bool) -> bool:
+        """Load announcements data in streaming fashion using the configured loader."""
+        if self.loader_type == "csv":
+            return self.loader.load_announcements_streaming(
+                announcements_data, self.announcements_filepath, is_first_batch
+            )
+        elif self.loader_type == "postgres":
+            return self.loader.load_announcements_streaming(announcements_data)
+        else:
+            self.logger.error(f"Streaming not supported for loader type: {self.loader_type}")
+            return False
     
     def get_error_summary(self) -> Dict:
         """Get a summary of errors encountered during extraction."""
