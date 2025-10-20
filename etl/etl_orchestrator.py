@@ -36,6 +36,9 @@ class ETLOrchestrator:
         # Initialize loader using strategy pattern
         self.loader = self._create_loader(loader_type)
 
+        # Cities always use CSV loader
+        self.csv_loader = CSVLoader()
+
         # Files paths (only for CSV loader)
         self.cities_filepath = os.path.join(DATA_DIR, CITIES_FILENAME)
         self.announcements_filepath = os.path.join(DATA_DIR, ANNOUNCEMENTS_FILENAME)
