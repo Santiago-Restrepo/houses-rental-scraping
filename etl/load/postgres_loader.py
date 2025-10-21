@@ -16,6 +16,8 @@ class PostgresLoader(BaseLoader):
 
     def __init__(self, connection_string: str):
         super().__init__()
+        if not connection_string:
+            raise ValueError("PostgreSQL connection string is required")
         self.connection_string = connection_string
         self.logger = logging.getLogger(self.__class__.__name__)
 

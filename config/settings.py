@@ -3,18 +3,24 @@ Configuration settings for the houses rental scraping project.
 Contains all URLs, scraping parameters, and application settings.
 """
 
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
 # Base URLs
 BASE_URL = "https://www.espaciourbano.com"
 CITIES_LIST_URL = f"{BASE_URL}/listado_arriendos.asp"
 RENTAL_BASE_URL = "/Resumen_Ciudad_arriendos.asp"
 
 # Scraping Configuration
-MAX_LISTINGS_PER_PAGE = 50
-PAGE_SLEEP_TIME = 2  # seconds between page requests
-CITY_SLEEP_TIME = 5  # seconds between cities
-MAX_WORKERS = 3  # Reduced to be more respectful
-REQUEST_TIMEOUT = 15  # Increased timeout
-REQUEST_RETRIES = 3
+MAX_LISTINGS_PER_PAGE = int(os.getenv("MAX_LISTINGS_PER_PAGE", 50))
+PAGE_SLEEP_TIME = int(os.getenv("PAGE_SLEEP_TIME", 2))  # seconds between page requests
+CITY_SLEEP_TIME = int(os.getenv("CITY_SLEEP_TIME", 5))  # seconds between cities
+MAX_WORKERS = int(os.getenv("MAX_WORKERS", 3))  # Reduced to be more respectful
+REQUEST_TIMEOUT = int(os.getenv("REQUEST_TIMEOUT", 15))  # Increased timeout
+REQUEST_RETRIES = int(os.getenv("REQUEST_RETRIES", 3))
 
 # Rate Limiting Configuration
 RATE_LIMIT_CONFIG = {
@@ -63,11 +69,11 @@ PROPERTY_TYPES = {
 }
 
 # Google Sheets Configuration
-CREDS_PATH = "secrets/creds.json"
-SHEETS_KEY = "1ellhzjwpDXoEnpAz6qoingcXXRkS3pSrwmWnoAhXq40"
+CREDS_PATH = os.getenv("CREDS_PATH")
+SHEETS_KEY = os.getenv("SHEETS_KEY")
 
 # PostgreSQL Configuration
-DATABASE_URL = "postgresql://houses_rental_user:password@localhost:5432/houses_rental"
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 # Loader Configuration
 DEFAULT_LOADER = "csv"  # Options: "csv", "postgres", "sheets"

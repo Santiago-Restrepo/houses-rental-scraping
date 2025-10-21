@@ -40,6 +40,12 @@ cd houses-rental-scraping
 pip install -r requirements.txt
 ```
 
+3. Set up environment variables:
+```bash
+cp .env.example .env
+# Edit .env with your specific configuration values
+```
+
 ### Running the Pipeline
 
 #### Option 1: Run with different modes (Recommended)
@@ -112,14 +118,35 @@ houses-rental-scraping/
 
 ## ⚙️ Configuration
 
-All configuration is centralized in `config/settings.py`:
+All configuration is centralized in `config/settings.py` and can be overridden using environment variables:
 
 - **URLs**: Base URLs for scraping (hardcoded for reliability)
-- **Scraping Parameters**: Page limits, sleep times, timeouts
+- **Scraping Parameters**: Page limits, sleep times, timeouts (configurable via various env vars)
 - **Data Storage**: Output directories and filenames
 - **Property Types**: Mapping of property type codes
-- **Loader Configuration**: Default loader type (csv/postgres/sheets)
-- **Database Configuration**: PostgreSQL connection string
+- **Loader Configuration**: Default loader type (hardcoded as "csv")
+- **Database Configuration**: PostgreSQL connection string (configurable via `DATABASE_URL`)
+- **Google Sheets**: Credentials path and sheet key (configurable via `CREDS_PATH` and `SHEETS_KEY`)
+- **Logging**: Log level and format (hardcoded defaults)
+
+### Environment Variables
+
+Copy `.env.example` to `.env` and modify the values as needed:
+
+```bash
+cp .env.example .env
+```
+
+Key environment variables:
+- `DATABASE_URL`: PostgreSQL connection string (contains sensitive credentials)
+- `SHEETS_KEY`: Google Sheets document ID
+- `CREDS_PATH`: Path to Google service account credentials
+- `MAX_LISTINGS_PER_PAGE`: Maximum listings to scrape per page (default: 50)
+- `PAGE_SLEEP_TIME`: Delay between page requests (default: 2)
+- `CITY_SLEEP_TIME`: Delay between cities (default: 5)
+- `MAX_WORKERS`: Number of concurrent threads (default: 3)
+- `REQUEST_TIMEOUT`: HTTP request timeout (default: 15)
+- `REQUEST_RETRIES`: Number of retry attempts for failed requests (default: 3)
 
 ## 📊 Output Data
 
@@ -271,4 +298,5 @@ This tool is designed for private use and research purposes. Users are responsib
 For issues or questions:
 1. Check the logs in `data/logs/`
 2. Review the error summary using `python cli.py errors`
-3. Verify configuration in `config/settings.py`
+3. Verify configuration in `config/settings.py` and your `.env` file
+4. Ensure all required environment variables are set
