@@ -8,13 +8,11 @@ import os
 from typing import List, Dict, Optional
 from etl.extract import CitiesExtractor, AnnouncementsExtractor
 from etl.transform import CitiesTransformer, AnnouncementsTransformer
-from etl.load import CSVLoader, SheetsLoader, PostgresLoader
+from etl.load import CSVLoader, PostgresLoader
 
 from config.settings import (
     CITIES_FILENAME, ANNOUNCEMENTS_FILENAME, DATA_DIR,
     STREAMING_CONFIG,
-    CREDS_PATH,
-    SHEETS_KEY,
     DATABASE_URL,
     DEFAULT_LOADER
 )
@@ -55,8 +53,6 @@ class ETLOrchestrator:
             return CSVLoader()
         elif loader_type == "postgres":
             return PostgresLoader(DATABASE_URL)
-        elif loader_type == "sheets":
-            return SheetsLoader(CREDS_PATH)
         else:
             raise ValueError(f"Unknown loader type: {loader_type}")
     
@@ -288,8 +284,6 @@ class ETLOrchestrator:
             return self.loader.load_announcements(announcements_data, self.announcements_filepath)
         elif self.loader_type == "postgres":
             return self.loader.load_announcements_streaming(announcements_data)
-        elif self.loader_type == "sheets":
-            return self.loader.load(announcements_data, SHEETS_KEY)
         else:
             self.logger.error(f"Unsupported loader type for announcements: {self.loader_type}")
             return False

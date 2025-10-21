@@ -82,7 +82,7 @@ def main():
     parser = argparse.ArgumentParser(description='Houses Rental Scraping ETL Pipeline')
     parser.add_argument('command', choices=['full', 'streaming', 'cities', 'errors'],
                        help='Command to run: full (complete pipeline), streaming (streaming pipeline), cities (cities only), errors (show error summary)')
-    parser.add_argument('--loader', choices=['csv', 'postgres', 'sheets'],
+    parser.add_argument('--loader', choices=['csv', 'postgres'],
                        default=None, help='Loader type to use (overrides DEFAULT_LOADER setting)')
 
     args = parser.parse_args()

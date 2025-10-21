@@ -20,7 +20,6 @@ The project follows a clean ETL architecture with three distinct layers:
 - **`BaseLoader`**: Abstract base class for all loaders
 - **`CSVLoader`**: Saves data to CSV files with various options
 - **`PostgresLoader`**: Saves data to PostgreSQL database with upsert logic
-- **`SheetsLoader`**: Saves data to Google Sheets
 
 ### 🎯 Orchestration (`etl/etl_orchestrator.py`)
 - **`ETLOrchestrator`**: Coordinates the entire pipeline execution with strategy pattern for loaders
@@ -62,7 +61,6 @@ python main.py --mode cities-only
 # Specify loader type (overrides DEFAULT_LOADER setting)
 python main.py --mode streaming --loader postgres
 python main.py --mode full --loader csv
-python main.py --mode streaming --loader sheets
 ```
 
 #### Option 2: Use the CLI interface
@@ -82,7 +80,6 @@ python cli.py errors
 # Specify loader type (overrides DEFAULT_LOADER setting)
 python cli.py streaming --loader postgres
 python cli.py full --loader csv
-python cli.py cities --loader sheets
 ```
 
 ## 📁 Project Structure
@@ -107,12 +104,22 @@ houses-rental-scraping/
 │   └── load/               # Loading layer
 │       ├── __init__.py
 │       ├── base_loader.py
-│       └── csv_loader.py
+│       ├── csv_loader.py
+│       ├── postgres_loader.py
+├── tests/                  # Unit and integration tests
+│   ├── __init__.py
+│   ├── test_extractors.py
+│   ├── test_transformers.py
+│   ├── test_loaders.py
+│   ├── test_orchestrator.py
+│   └── test_integration.py
 ├── utils/
 │   └── logger.py           # Logging configuration
 ├── main.py                 # Main entry point
 ├── cli.py                  # Command-line interface
 ├── requirements.txt        # Python dependencies
+├── requirements-dev.txt    # Development dependencies
+├── pytest.ini             # Test configuration
 └── README.md              # This file
 ```
 
@@ -126,7 +133,6 @@ All configuration is centralized in `config/settings.py` and can be overridden u
 - **Property Types**: Mapping of property type codes
 - **Loader Configuration**: Default loader type (hardcoded as "csv")
 - **Database Configuration**: PostgreSQL connection string (configurable via `DATABASE_URL`)
-- **Google Sheets**: Credentials path and sheet key (configurable via `CREDS_PATH` and `SHEETS_KEY`)
 - **Logging**: Log level and format (hardcoded defaults)
 
 ### Environment Variables
@@ -139,8 +145,6 @@ cp .env.example .env
 
 Key environment variables:
 - `DATABASE_URL`: PostgreSQL connection string (contains sensitive credentials)
-- `SHEETS_KEY`: Google Sheets document ID
-- `CREDS_PATH`: Path to Google service account credentials
 - `MAX_LISTINGS_PER_PAGE`: Maximum listings to scrape per page (default: 50)
 - `PAGE_SLEEP_TIME`: Delay between page requests (default: 2)
 - `CITY_SLEEP_TIME`: Delay between cities (default: 5)
@@ -204,13 +208,10 @@ The pipeline creates and maintains two tables:
 - `status`: Active/inactive status
 - `raw_json`: Complete raw data
 
-### Google Sheets (when using `sheets` loader)
-Data is saved to a Google Sheet specified by `SHEETS_KEY` in configuration.
-
 ## 🆕 New Features (v3.0)
 
 ### Strategy Pattern for Loaders
-- **Multiple Destinations**: Choose between CSV, PostgreSQL, or Google Sheets
+- **Multiple Destinations**: Choose between CSV or PostgreSQL
 - **Runtime Configuration**: Switch loaders without code changes
 - **Independent Operation**: Each loader works completely independently
 - **Extensible Design**: Easy to add new loaders by implementing `BaseLoader`
@@ -251,6 +252,35 @@ Logs are automatically saved to `data/logs/` with timestamps. The logging system
 - Detailed error tracking
 - Performance monitoring
 - URL failure tracking
+
+## 🧪 Testing
+
+The project includes comprehensive unit and integration tests:
+
+### Running Tests
+```bash
+# Install development dependencies
+pip install -r requirements-dev.txt
+
+# Run all tests
+pytest
+
+# Run with coverage
+pytest --cov=etl
+
+# Run specific test file
+pytest tests/test_extractors.py
+
+# Run tests in verbose mode
+pytest -v
+```
+
+### Test Structure
+- **`tests/test_extractors.py`**: Tests for data extraction components
+- **`tests/test_transformers.py`**: Tests for data transformation components
+- **`tests/test_loaders.py`**: Tests for data loading components
+- **`tests/test_orchestrator.py`**: Tests for ETL orchestration logic
+- **`tests/test_integration.py`**: Integration tests for component interaction
 
 ## 🛠️ Development
 

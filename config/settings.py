@@ -68,15 +68,11 @@ PROPERTY_TYPES = {
     'lots_and_parcels': 10,
 }
 
-# Google Sheets Configuration
-CREDS_PATH = os.getenv("CREDS_PATH")
-SHEETS_KEY = os.getenv("SHEETS_KEY")
-
 # PostgreSQL Configuration
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 # Loader Configuration
-DEFAULT_LOADER = "csv"  # Options: "csv", "postgres", "sheets"
+DEFAULT_LOADER = "csv"  # Options: "csv", "postgres"
 
 # Logging Configuration
 LOG_LEVEL = "INFO"
